@@ -223,6 +223,11 @@ class Deb::S3::Package
       end
     end
 
+    array_or_nil = lambda do |ary|
+      return nil if ary.count == 0
+      return Array(ary)
+    end
+
     # Parse 'epoch:version-iteration' in the version string
     version_re = /^(?:([0-9]+):)?(.+?)(?:-(.*))?$/
     m = version_re.match(parse.call("Version"))
@@ -241,6 +246,10 @@ class Deb::S3::Package
     self.attributes[:deb_priority] = parse.call("Priority")
     self.attributes[:deb_origin] = parse.call("Origin")
     self.attributes[:deb_installed_size] = parse.call("Installed-Size")
+
+    self.attributes[:deb_pre_depends] = array_or_nil.call(parse_depends(parse.call("Pre-Depends")))
+    self.attributes[:deb_recommends] = array_or_nil.call(parse_depends(parse.call("Recommends")))
+    self.attributes[:deb_suggests] = array_or_nil.call(parse_depends(parse.call("Suggests")))
 
     # Packages manifest fields
     self.url_filename = parse.call("Filename")
@@ -263,6 +272,7 @@ class Deb::S3::Package
     self.conflicts += Array(parse_depends(parse.call("Conflicts")))
     self.provides += Array(parse_depends(parse.call("Provides")))
     self.replaces += Array(parse_depends(parse.call("Replaces")))
+
   end # def extract_info
 
   def apply_file_info(file)
